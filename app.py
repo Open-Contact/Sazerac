@@ -5,9 +5,9 @@ import sys
 
 import requests
 
-
 def readConfig(self):
     return None
+
 
 def getToken():
     docdict = {
@@ -20,6 +20,14 @@ def getToken():
     token = getTokenQuery.json()['access_token']
     return token
 
+
+def createRealm():
+    payload = {}
+    req = requests.post("http://localhost:8080/auth/admin/realms/master/", data=json.dumps(
+        payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getToken()})
+    print('Response: ' + str(req.status_code))
+    return(req.status_code)
+
 def createUsers():
     payload = {
         "email": "jimbob@gmail.com",
@@ -31,18 +39,48 @@ def createUsers():
     }
 
     req = requests.post("http://localhost:8080/auth/admin/realms/master/users", data=json.dumps(payload), headers=    {"content-type": 'application/json', "Authorization": "Bearer " + getToken()})
-    
-    print('Response: ' + str(req.status_code))
+    print('\nResponse: ' + str(req.status_code))
+    return(req.status_code)
+
 
 def createGroups():
     payload = {}
     req = requests.post("http://localhost:8080/auth/admin/realms/master/", data=json.dumps(
         payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getToken()})
+    print('Response: ' + str(req.status_code))
+    return(req.status_code)
+
+
+def createRoles():
+    payload = {}
+    req = requests.post("http://localhost:8080/auth/admin/realms/master/", data=json.dumps(
+        payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getToken()})
+    print('Response: ' + str(req.status_code))
+
+#run the functions and return whether they were success for not. 
+def loadinIf():
+    if createRealm() == '201':
+        print('Success \n')
+    else:
+        print('Failed: 500\n')
+    if createUsers() == 201:
+        print('Success \n')
+    else:
+        print('Failed: 500\n')
+    if createGroups() == '201':
+        print('Success \n')
+    else:
+        print('Failed: 500\n')
+    if createRoles() == '201':
+        print('Success \n')
+    else:
+        print('Failed: 500\n')
+
 
 
 
 
 if __name__ == "__main__":
-    createUsers()
+    loadinIf()
 else:
     raise ValueError('you broke it you fool')
