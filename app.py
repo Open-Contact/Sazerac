@@ -10,24 +10,45 @@ def readConfig(self):
     return None
 
 
-def getToken():
+def getTokenOfAdmin():
     docdict = {
         'grant_type': "password",
         'username': "admin",
         'password': "admin",
         'client_id': "admin-cli"
     }
-    getTokenQuery = requests.post('http://localhost:8080/auth/realms/master/protocol/openid-connect/token', data=docdict)
-    token = getTokenQuery.json()['access_token']
+    getTokenOfAdminQuery = requests.post('http://localhost:8080/auth/realms/master/protocol/openid-connect/token', data=docdict)
+    token = getTokenOfAdminQuery.json()['access_token']
     return token
 
+def createClients():
+    payload = {
+        'serviceAccountsEnabled': 'true'
+    }
+    req = requests.post("http://localhost:8080/auth/admin/realms/master/clients", data=json.dumps(payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getTokenOfAdmin()})
+    print('Response: ' + str(req.status_code))
+
+
+def getTokenOfRealmCreator():
+    docdict = {
+        'grant_type': "password",
+        'username': "admin",
+        'password': "admin",
+        'client_id': "create-realm"
+    }
+    getTokenOfRealmCreatorQuery = requests.post(
+        'http://localhost:8080/auth/realms/master/protocol/openid-connect/token', data=docdict)
+    print(getTokenOfRealmCreatorQuery.text)
 
 #Create opencontactdev realm RS512 email-verify false reg-allow false
 def createRealm():
-    payload = {}
-    req = requests.post("http://localhost:8080/auth/admin/realms/master/", data=json.dumps(
-        payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getToken()})
-    print('\nResponse: ' + str(req.status_code))
+    payload = {
+        'realm': 'realm3',
+        'displayName': 'realm3'
+    }
+    req = requests.post("http://localhost:8080/", data=json.dumps(
+        payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getTokenOfRealmCreator()})
+    print('\nResponse CreateRealm: ' + str(req.status_code))
     return(req.status_code)
 
 
@@ -35,7 +56,8 @@ def createRealm():
 #testmanager
 #testadmin
 def createUsers():
-    payload = {
+    #payloads
+    adminPayload = {
         "email": "",
         "username": "admin",
         "enabled": True,
@@ -44,38 +66,82 @@ def createUsers():
         "credentials": [{"value": "admin", "type": "password", }],
     }
 
-    req = requests.post("http://localhost:8080/auth/admin/realms/opencontactdev/users", data=json.dumps(payload), headers=    {"content-type": 'application/json', "Authorization": "Bearer " + getToken()})
-    print('Response: ' + str(req.status_code))
-    return(req.status_code)
+    managerPayload = {
+        "email": "",
+        "username": "manger",
+        "enabled": True,
+        "firstName": "",
+        "lastName": "",
+        "credentials": [{"value": "manager", "type": "password", }],
+    }
 
-def getUsername():
+    agentPayload = {
+        "email": "",
+        "username": "agent",
+        "enabled": True,
+        "firstName": "",
+        "lastName": "",
+        "credentials": [{"value": "agent", "type": "password", }],
+    }
+
+        #make new user request
+    req = requests.post("http://localhost:8080/auth/admin/realms/opencontactdev/users", data=json.dumps(adminPayload), headers=    {"content-type": 'application/json', "Authorization": "Bearer " + getTokenOfAdmin()})
+
+    req2 = requests.post("http://localhost:8080/auth/admin/realms/opencontactdev/users", data=json.dumps(managerPayload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getTokenOfAdmin()})
+
+    req3 = requests.post("http://localhost:8080/auth/admin/realms/opencontactdev/users", data=json.dumps(
+        agentPayload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getTokenOfAdmin()})
+    print('Response UserCreation:  ' + str(req.status_code) + ':' + str(req2.status_code) + ':' + str(req3.status_code))
+    return(req.status_code, req2.status_code, req3.status_code)
+
+
+def getUsername(): 
     payload = {
-        'search': 'admin'
+        'search': {
+            'admin',
+            'manager',
+            'agent'
+        }
     }
     req = requests.get("http://localhost:8080/auth/admin/realms/opencontactdev/users",
-                       data=payload, headers={"Authorization": "Bearer " + getToken()})
+                       data=payload, headers={"Authorization": "Bearer " + getTokenOfAdmin()})
     load = json.loads(req.text)
     for i in load:
         print(i['id'])
+
 
 #agents - roles
 #managers
 #admins
 def createGroups():
-    payload = {}
-    req = requests.post("http://localhost:8080/auth/admin/realms/master/", data=json.dumps(
-        payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getToken()})
-    print('Response: ' + str(req.status_code))
-    return(req.status_code)
+    adminPayload = {
+        'name': 'admin'
+    }
+    managerPayload = {
+        'name': 'manager'
+    }
+    agentPayload = {
+        'name': 'agent'
+    }
+   
+    req = requests.post("http://localhost:8080/auth/admin/realms/opencontactdev/groups", data=json.dumps(adminPayload), headers={"content-type": 'application/json',"Authorization": "Bearer " + getTokenOfAdmin()})
+    
+    req2 = requests.post("http://localhost:8080/auth/admin/realms/opencontactdev/groups", data=json.dumps(managerPayload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getTokenOfAdmin()})
+    
+    req3 = requests.post("http://localhost:8080/auth/admin/realms/opencontactdev/groups", data=json.dumps(agentPayload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getTokenOfAdmin()})
+    
+    print('Response GroupCreation: ' + str(req.status_code) + ':' +
+          str(req2.status_code) + ':' + str(req3.status_code))
+    return(req.status_code, req2.status_code, req3.status_code)
 
-
+    
 #agent
 #manager
 #admin
 def createRoles():
     payload = {}
     req = requests.post("http://localhost:8080/auth/admin/realms/master/", data=json.dumps(
-        payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getToken()})
+        payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getTokenOfAdmin()})
     print('Response: ' + str(req.status_code))
 
 
@@ -85,7 +151,7 @@ def createRoles():
 def addRoles():
     payload = {}
     req = requests.post("http://localhost:8080/auth/admin/realms/master/", data=json.dumps(
-        payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getToken()})
+        payload), headers={"content-type": 'application/json', "Authorization": "Bearer " + getTokenOfAdmin()})
     print('Response: ' + str(req.status_code))
 
 
@@ -119,9 +185,14 @@ r"""
 """
     )
 
+#working components
 
 
 if __name__ == "__main__":
+    getTokenOfRealmCreator()
+    createUsers()
+    time.sleep(.5)
+    createGroups()
     getUsername()
 else:
     raise ValueError('you broke it you fool')

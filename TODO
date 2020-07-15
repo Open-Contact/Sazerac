@@ -1,0 +1,7 @@
+OpenContact IDP:
+  ☐ Create new client create-realm
+  ☐ Map roles from create-realm to create-realm client
+  ☐ Create realm 
+  ☐ Create roles 
+  ☐ Create RoleMapper 
+  ☐ to be extended
